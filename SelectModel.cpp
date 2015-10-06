@@ -10,7 +10,7 @@
 int g_iTotalConn = 0;
 int maxClienId;
 
-//FD_SETSIZE = 64
+//FD_SETSIZE = 1024  /usr/include/linux/posix_types.h
 SOCKET g_CliSockets[FD_SETSIZE];
 DWORD WINAPI WorkerThread(LPVOID lpParameter);
 int main(int argc, char *argv[])
