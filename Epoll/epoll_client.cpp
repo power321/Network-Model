@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAXLINE 5
+#define MAXLINE 1024
 
 void err_sys(const char* str)
 {
@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 		while (1)
 		{
 			n = read(sockfd, recvline + count, MAXLINE);
+			printf("n = %d\n",n);
 			if (n == MAXLINE)
 			{
 				count += n;
@@ -52,6 +53,7 @@ int main(int argc, char **argv)
 			else
 				break;
 		}
+		printf("recv total = %d\n",count);
 		printf("%s\n", recvline);
 	}
 	exit(0);

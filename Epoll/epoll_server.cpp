@@ -17,6 +17,8 @@ using namespace std;
 #define SERV_PORT 5000
 #define INFTIM 1000
 
+char str[] = "hello from epoll : this is a long string which may be cut by the net\n";
+
 void setnonblocking(int sock){
 	int opts;
 	opts = fcntl(sock, F_GETFL);
@@ -70,9 +72,11 @@ int main(){
 		if (bOut == 1)
 			break;
 		nfds = epoll_wait(epfd, events, 20, -1);//Infinite
-		cout << "\nepoll_wait returns\n";
+                int tmp = nfds;
+                cout << "epoll_wait returns " << tmp << endl;
 
-		for (i = 0; i < nfds; ++i){
+                for (i = 0; i < tmp; ++i){
+                    cout << "event number : "<< i << "nfds : " << tmp << endl;
 			if (events[i].data.fd == listenfd){
 				connfd = accept(listenfd, (sockaddr *)&clientaddr, &clilen);
 				if (connfd < 0){
@@ -80,8 +84,8 @@ int main(){
 					return 1;
 				}
 				
-				char *str = inet_ntoa(clientaddr.sin_addr);
-				cout << "accept a connection from" << str << endl;
+                                char *adr = inet_ntoa(clientaddr.sin_addr);
+                                cout << "accept a connection from" << adr << endl;
 
 				setnonblocking(connfd);
 				ev.data.fd = connfd;
@@ -93,7 +97,7 @@ int main(){
 				cout << "EPOLLIN" <<endl;
 				if ((sockfd = events[i].data.fd) < 0)
 					continue;
-
+                                cout << "sockfd = " << sockfd << endl;
 				char * head = line;
 				int recvNum = 0;
 				int count = 0;
@@ -137,7 +141,7 @@ int main(){
 					}
 				}
 
-				if (bReadOk == true){
+                                if (bReadOk == true && count != 0){
 					line[count] = '\0';
 					cout << "we have read from the client : " << line;
 					ev.data.fd = sockfd;
@@ -146,17 +150,24 @@ int main(){
 				}
 			}
 			else if (events[i].events & EPOLLOUT){
-				const char str[] = "hello from epoll : this is a long string which may be cut by the net\n";
-				memcpy(line, str, sizeof(str));
-				cout << "Write " << line << endl;
+                            cout << "before out ndfs = " << tmp << endl;
+
+                                //memcpy(line, str, sizeof(str));
+                                cout << "after mem ndfs = " << tmp << endl;
+                                cout << "Write " << str ;
 				sockfd = events[i].data.fd;
-				
+                                cout << "sockfd = " << sockfd << endl;
+
 				bool bWritten = false;
 				int writenLen = 0;
 				int count = 0;
-				char * head = line;
+                                char * head = str;
+                                cout << "str Size = " << sizeof(str) << endl;
+                                head[sizeof(str)] = '\0';
+                                cout << "before while ndfs = " << tmp << endl;
 				while(1){
 					writenLen = send(sockfd, head + count, MAXLINE, 0);
+                                        cout << "writenLen = " << writenLen << endl;
 					if (writenLen == -1){
 						if (errno == EAGAIN){
 							bWritten = true;
@@ -192,11 +203,14 @@ int main(){
 						break;
 					}
 				}
-
-				if (bWritten == true){
+                                cout << "count = " << count << endl;
+                                if (bWritten == true && count != 0){
+                                        cout << "write ok!" << endl;
 					ev.data.fd = sockfd;
 					ev.events = EPOLLIN | EPOLLET;
+                                        cout << "before ctl ndfs = " << tmp << endl;
 					epoll_ctl(epfd, EPOLL_CTL_MOD, sockfd, &ev);
+                                        cout << "after ctl ndfs = " << tmp << endl;
 				}
 			}
 		}
